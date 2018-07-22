@@ -51,6 +51,7 @@ def insert_spanner_data(instance_id,database_id,tabless):
     database = instance.database(database_id)
     with database.batch() as batch:
        for tab in tables:
+           #todo figure out how to specify all columns
             batch.insert(
                 table=tab,
                 columns = (),
