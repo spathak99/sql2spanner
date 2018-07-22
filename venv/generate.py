@@ -7,20 +7,21 @@ import pandas as pd
 
 
 def get_statement_datatype(txt):
-    if "CHARACTER" or "VARCHAR" or "CHARACTER VARYING" in txt:
+    if "CHARACTER" in txt or "VARCHAR" in txt or "CHARACTER VARYING" in txt:
         return "STRING"
-    if "INTEGER" or "SMALLINT" or "BIGINT" in txt:
+    if "INTEGER" in txt or "SMALLINT" in txt or "BIGINT" in txt:
         return "INT64"
-    if "FLOAT" or "REAL" or "DOUBLE PRECISION" or "NUMERIC" or "DECIMAL" in txt:
+    if "FLOAT" in txt or "REAL" in txt or "DOUBLE PRECISION" in txt or "NUMERIC" in txt or "DECIMAL" in txt:
         return "FLOAT64"
     if "DATE" in txt:
         return "DATE"
-    if "TIME" or "TIMESTAMP" in txt:
+    if "TIME" in txt or "TIMESTAMP" in txt:
         return "TIMESTAMP"
     if "BOOLEAN" in txt:
         return "BOOL"
-    if "ARRAY" or "MULTISET" in txt:
+    if "ARRAY" in txt or "MULTISET" in txt:
         return "ARRAY"
+    return ""
 
 
 def get_real_datatype(d):
