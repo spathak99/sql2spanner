@@ -6,7 +6,28 @@ import sqlite3
 import pandas as pd
 
 
-def generate_table_statements(tb,tb_name):
+def get_statement_datatype(txt):
+    if "CHARACTER" or "VARCHAR" or "CHARACTER VARYING" in txt:
+        return "STRING"
+    if "INTEGER" or "SMALLINT" or "BIGINT" in txt:
+        return "INT64"
+    if "FLOAT" or "REAL" or "DOUBLE PRECISION" or "NUMERIC" or "DECIMAL" in txt:
+        return "FLOAT64"
+    if "DATE" in txt:
+        return "DATE"
+    if "TIME" or "TIMESTAMP" in txt:
+        return "TIMESTAMP"
+    if "BOOLEAN" in txt:
+        return "BOOL"
+    if "ARRAY" or "MULTISET" in txt:
+        return "ARRAY"
+
+
+def get_real_datatype(d):
+    return 0
+
+
+def generate_spanner_table(tb,tb_name):
     schema = """CREATE TABLE """ + tb_name + """("""
     c = 0
     id = ""
@@ -14,16 +35,16 @@ def generate_table_statements(tb,tb_name):
         oblist = list(ob)
         if "Id" in oblist[1]: id = oblist[1]
         if c == len(tb) - 1:
-            schema += oblist[1] + "     " + oblist[2]
+            schema += oblist[1] + "     " + get_statement_datatype(oblist[2])
         else:
-            schema += oblist[1] + "     " + oblist[2] +","
+            schema += oblist[1] + "     " + get_statement_datatype(oblist[2]) +","
         c+=1
     schema+= """)"""
     if id != "": schema += """ PRIMARY KEY (""" + id + """)"""
     ddl_statements.append(schema)
 
 
-def insert_data(instance_id,database_id):
+def insert_spanner_data(instance_id,database_id):
     spanner_client = spanner.Client()
     instance = spanner_client.instance(instance_id)
     database = instance.database(database_id)
@@ -31,11 +52,6 @@ def insert_data(instance_id,database_id):
        batch.insert(
             
        )
-
-
-
-
-
 
 spanner_client = spanner.Client()
 instance_id = 'my-instance-id'
@@ -51,6 +67,9 @@ names = list(c.execute("SELECT name FROM sqlite_master WHERE type='table';"))
 
 for name in names:
     table_list = list(c.execute("PRAGMA table_info(" + name[0] + ")").fetchall())
-    generate_table_statements(table_list,name[0])
+    generate_spanner_table(table_list,name[0])
 
-print(ddl_statements)
+for st in ddl_statements:
+    print(st)
+    print("\n")
+
