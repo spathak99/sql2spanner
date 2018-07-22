@@ -45,14 +45,18 @@ def generate_spanner_table(tb,tb_name):
     ddl_statements.append(schema)
 
 
-def insert_spanner_data(instance_id,database_id):
+def insert_spanner_data(instance_id,database_id,tabless):
     spanner_client = spanner.Client()
     instance = spanner_client.instance(instance_id)
     database = instance.database(database_id)
     with database.batch() as batch:
-       batch.insert(
-            
-       )
+       for tab in tables:
+            batch.insert(
+                table=tab,
+                columns = (),
+                values = ()
+            )
+
 
 spanner_client = spanner.Client()
 instance_id = 'my-instance-id'
