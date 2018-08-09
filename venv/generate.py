@@ -40,22 +40,27 @@ def get_real_datatype(d):
     return 0
 
 
-def get_values(tab):
-    cstr = "SELECT COUNT(*) FROM " + tab + ";"
-    n = c.execute(cstr)
+def get_values(name):
+    c.execute("SELECT * FROM " + name[0] + " LIMIT 0")
+    all_cols = []
+    for i in list(c.description):
+        all_cols.append(i[0])
+    print(all_cols)
+    id = all_cols[0]
+    cstr = "SELECT COUNT(*) FROM " + name[0] + ";"
+    n = c.execute(cstr).fetchone()[0]
     rows = []
-    for i in range(1,n):
-        nstr = "SELECT * FROM " + table + " ORDER BY ID LIMIT " + str(i) + "-1,1"
+    for i in range(1, n):
+        nstr = "SELECT * FROM " + name[0] + " ORDER BY " + id + " LIMIT " + str(i) + "-1,1"
+        vals = list(c.execute(nstr))
         row = ()
-        row_vals = list(c.execute(nstr))
-        for j in range(0,len(row_vals)):
-            if(isinstance(row_vals(j),str)):
-                row += unicode(row_vals[j])
+        for val in vals:
+            if(isinstance(val,str)):
+                row += unicode(val)
             else:
-                row += row_vals[j]
+                row += val
         rows.append(row)
-    return row
-
+    return rows
 
 
 def generate_spanner_table(tb,tb_name):
@@ -81,15 +86,16 @@ def insert_spanner_data(instance_id,database_id,tables):
     database = instance.database(database_id)
     with database.batch() as batch:
        for tab in tables:
-           #todo figure out how to specify all columns
-           #Create a datastructure that maps columns to values
-           cquer = "select * from INFORMATION_SCHEMA.COLUMNS where TABLE_NAME='" + tab + "'"
-           cols = list(c.execute(cquer))
-           tupcols = tuple(cols)
+           #Get all col names, and all vals from all rows
+           c.execute("SELECT * FROM " + name[0] + " LIMIT 0")
+           all_cols = []
+           for i in list(c.description):
+               all_cols.append(i[0])
+           tupcols = tuple(all_cols)
            batch.insert(
                 table=tab,
                 columns = tupcols,
-                values = get_values(tab,cols)
+                values = get_values(tab)
             )
 
 
