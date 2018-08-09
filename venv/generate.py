@@ -104,6 +104,10 @@ names = list(c.execute("SELECT name FROM sqlite_master WHERE type='table';"))
 for name in names:
     table_list = list(c.execute("PRAGMA table_info(" + name[0] + ")").fetchall())
     generate_spanner_table(table_list,name[0])
+for name in names:
+    print(get_values(name))
+    print("\n")
+    print("\n")
 
 for st in ddl_statements:
     print(st)
