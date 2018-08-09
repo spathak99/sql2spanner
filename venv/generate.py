@@ -6,6 +6,18 @@ import sqlite3
 import pandas as pd
 
 
+spanner_client = spanner.Client()
+instance_id = 'my-instance-id'
+instance = spanner_client.instance(instance_id)
+database_id = 'my-database-id'
+database = instance.database(database_id)
+
+ddl_statements = []
+
+conn = sqlite3.connect('chinook.db')
+c = conn.cursor()
+
+
 def get_statement_datatype(txt):
     if "CHARACTER" in txt or "VARCHAR" in txt or "CHARACTER VARYING" in txt:
         return "STRING"
@@ -28,47 +40,52 @@ def get_real_datatype(d):
     return 0
 
 
+def get_values(cols):
+    values = []
+    for col in cols:
+        s = "SELECT " + col + " FROM " + tab + ";"
+        vals = list(c.execute(s))
+        values.append(vals)
+    values = [x for y in values for y in x]
+    return tuple(value)
+
+
+
 def generate_spanner_table(tb,tb_name):
     schema = """CREATE TABLE """ + tb_name + """("""
-    c = 0
+    cn = 0
     id = ""
     for ob in tb:
         oblist = list(ob)
         if "Id" in oblist[1]: id = oblist[1]
-        if c == len(tb) - 1:
+        if cn == len(tb) - 1:
             schema += oblist[1] + "     " + get_statement_datatype(oblist[2])
         else:
             schema += oblist[1] + "     " + get_statement_datatype(oblist[2]) +","
-        c+=1
+        cn+=1
     schema+= """)"""
     if id != "": schema += """ PRIMARY KEY (""" + id + """)"""
     ddl_statements.append(schema)
 
 
-def insert_spanner_data(instance_id,database_id,tabless):
+def insert_spanner_data(instance_id,database_id,tables):
     spanner_client = spanner.Client()
     instance = spanner_client.instance(instance_id)
     database = instance.database(database_id)
     with database.batch() as batch:
        for tab in tables:
            #todo figure out how to specify all columns
-            batch.insert(
+           #Create a datastructure that maps columns to values
+           cquer = "select * from INFORMATION_SCHEMA.COLUMNS where TABLE_NAME='" + tab + "'"
+           cols = list(c.execute(cquer))
+           tupcols = tuple(cols)
+           batch.insert(
                 table=tab,
-                columns = (),
-                values = ()
+                columns = tupcols,
+                values = get_values(tab,cols)
             )
 
 
-spanner_client = spanner.Client()
-instance_id = 'my-instance-id'
-instance = spanner_client.instance(instance_id)
-database_id = 'my-database-id'
-database = instance.database(database_id)
-
-ddl_statements = []
-
-conn = sqlite3.connect('chinook.db')
-c = conn.cursor()
 names = list(c.execute("SELECT name FROM sqlite_master WHERE type='table';"))
 
 for name in names:

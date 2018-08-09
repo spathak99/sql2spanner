@@ -13,7 +13,7 @@ def store(data):
 def make_json(res):
     dump = {}
     for r in res:
-        #TODO append to json for data backup
+    #TODO append to json for data backup
     store(dump)
 
 def backup_data(tables):
