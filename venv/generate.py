@@ -40,14 +40,21 @@ def get_real_datatype(d):
     return 0
 
 
-def get_values(cols):
-    values = []
-    for col in cols:
-        s = "SELECT " + col + " FROM " + tab + ";"
-        vals = list(c.execute(s))
-        values.append(vals)
-    values = [x for y in values for y in x]
-    return tuple(value)
+def get_values(tab):
+    cstr = "SELECT COUNT(*) FROM " + tab + ";"
+    n = c.execute(cstr)
+    rows = []
+    for i in range(1,n):
+        nstr = "SELECT * FROM " + table + " ORDER BY ID LIMIT " + str(i) + "-1,1"
+        row = ()
+        row_vals = list(c.execute(nstr))
+        for j in range(0,len(row_vals)):
+            if(isinstance(row_vals(j),str)):
+                row += unicode(row_vals[j])
+            else:
+                row += row_vals[j]
+        rows.append(row)
+    return row
 
 
 
