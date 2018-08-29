@@ -4,17 +4,17 @@ from sql.aggregate import *
 from sql.conditionals import *
 import sqlite3
 import pandas as pd
-
+import re
 
 spanner_client = spanner.Client()
-instance_id = 'my-instance-id'
+instance_id = input("Enter your spanner instance id: ")
 instance = spanner_client.instance(instance_id)
-database_id = 'my-database-id'
-database = instance.database(database_id)
+database_id = input("Enter your spanner database id: ")
 
-ddl_statements = []
+dd = []
+db_file = input("Enter Database File: ")
 
-conn = sqlite3.connect('chinook.db')
+conn=sqlite3.connect(db_file)
 c = conn.cursor()
 
 
@@ -35,9 +35,6 @@ def get_statement_datatype(txt):
         return "ARRAY"
     return ""
 
-
-def get_real_datatype(d):
-    return 0
 
 
 def get_values(name):
@@ -64,20 +61,39 @@ def get_values(name):
 
 
 def generate_spanner_table(tb,tb_name):
+    c.execute("select sql from sqlite_master where sql not NULL")
+    fetch = c.fetchall()
     schema = """CREATE TABLE """ + tb_name + """("""
     cn = 0
-    id = ""
-    for ob in tb:
+    id = None
+    fors = []
+    ref = None
+    for ob,row in zip(tb,fetch):
+        print(row[0])
+        res = re.sub("`\s*,\s*`",",",row[0])
+        #print(ob)
+        pattern = "FOREIGN\s+KEY\s*\(*(.*?)*\)"
+
+        matches = re.search(pattern,res)
+        if matches:
+            matches = str(matches.group())
+            match2 = re.search("\[(.*?)\]",matches)
+            for m in match2.groups():
+                fors.append(m)
         oblist = list(ob)
-        if "Id" in oblist[1]: id = oblist[1]
+        if "Id" in oblist[1]:
+            id = oblist[1]
         if cn == len(tb) - 1:
             schema += oblist[1] + "     " + get_statement_datatype(oblist[2])
         else:
             schema += oblist[1] + "     " + get_statement_datatype(oblist[2]) +","
         cn+=1
     schema+= """)"""
-    if id != "": schema += """ PRIMARY KEY (""" + id + """)"""
-    ddl_statements.append(schema)
+    if id:
+        if len(fors) < 0:
+            schema += """ PRIMARY KEY (""" + id + """)"""
+
+    return schema
 
 
 def insert_spanner_data(instance_id,database_id,tables):
@@ -101,15 +117,29 @@ def insert_spanner_data(instance_id,database_id,tables):
 
 names = list(c.execute("SELECT name FROM sqlite_master WHERE type='table';"))
 
+c.execute("select sql from sqlite_master where sql not NULL")
+#for row in c.fetchall():
+       # print(row)
+
 for name in names:
     table_list = list(c.execute("PRAGMA table_info(" + name[0] + ")").fetchall())
-    generate_spanner_table(table_list,name[0])
-for name in names:
+    schem = generate_spanner_table(table_list,name[0])
+    dd.append(schem)
+
+
+
+"""database = instance.database(database_id, ddl_statements=dd)
+operation = database.create()
+insert_spanner_data(instance_id,database_id,names)"""
+
+
+
+"""for name in names:
     print(get_values(name))
     print("\n")
-    print("\n")
+    print("\n")"""
 
-for st in ddl_statements:
+for st in dd:
     print(st)
     print("\n")
 
