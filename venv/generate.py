@@ -66,34 +66,44 @@ def generate_spanner_table(tb,tb_name):
     schema = """CREATE TABLE """ + tb_name + """("""
     cn = 0
     id = None
-    fors = []
-    ref = None
-    for ob,row in zip(tb,fetch):
-        print(row[0])
-        res = re.sub("`\s*,\s*`",",",row[0])
-        #print(ob)
+    prims = []
+    schem = ""
+    for row in fetch:
+        tab = "CREATE\s+TABLE\s*\"*(.*?)*\""
+        first_match = re.search(tab,row[0])
+        if first_match:
+            statement = first_match.group(0)
+            key_rgx  = "\"(.*?)*\""
+            key_val = re.search(key_rgx,statement)
+            if key_val:
+                if tb_name == key_val.group(0)[1:-1]:
+                    schem = row[0]
+                    break
+    prim = "\[(.*?)\]\s+INTEGER\s+PRIMARY\s+KEY"
+    matches = re.search(prim, row[0])
+    if matches:
+        int_key = matches.groups([1])[0]
+        prims.append(int_key)
         pattern = "FOREIGN\s+KEY\s*\(*(.*?)*\)"
+        ms = re.finditer(pattern, row[0])
+        if ms:
+            for ma in ms:
+                match2 = re.search("\[(.*?)\]", ma.group())
+                prims.append(match2.groups()[0])
+   # print(prims,"\n")
 
-        matches = re.search(pattern,res)
-        if matches:
-            matches = str(matches.group())
-            match2 = re.search("\[(.*?)\]",matches)
-            for m in match2.groups():
-                fors.append(m)
+    for ob in tb:
         oblist = list(ob)
-        if "Id" in oblist[1]:
-            id = oblist[1]
         if cn == len(tb) - 1:
             schema += oblist[1] + "     " + get_statement_datatype(oblist[2])
         else:
-            schema += oblist[1] + "     " + get_statement_datatype(oblist[2]) +","
-        cn+=1
-    schema+= """)"""
-    if id:
-        if len(fors) < 0:
-            schema += """ PRIMARY KEY (""" + id + """)"""
-
+            schema += oblist[1] + "     " + get_statement_datatype(oblist[2]) + ","
+        cn += 1
+        schema += """)"""
+    if len(prims) > 0:
+        schema += """PRIMARY KEY """ + str(tuple(prims))
     return schema
+
 
 
 def insert_spanner_data(instance_id,database_id,tables):
