@@ -20,9 +20,9 @@ c = conn.cursor()
 
 def get_statement_datatype(txt):
     if "CHARACTER" in txt or "VARCHAR" in txt or "CHARACTER VARYING" in txt:
-        return "STRING"
+        return "STRING(MAX)"
     if "INTEGER" in txt or "SMALLINT" in txt or "BIGINT" in txt:
-        return "INT64"
+        return "INT64 NOT NULL"
     if "FLOAT" in txt or "REAL" in txt or "DOUBLE PRECISION" in txt or "NUMERIC" in txt or "DECIMAL" in txt:
         return "FLOAT64"
     if "DATE" in txt:
@@ -33,8 +33,9 @@ def get_statement_datatype(txt):
         return "BOOL"
     if "ARRAY" in txt or "MULTISET" in txt:
         return "ARRAY"
+    if "BINARY" in txt:
+        return "BYTES(MAX)"
     return ""
-
 
 
 def get_values(name):
@@ -63,7 +64,7 @@ def get_values(name):
 def generate_spanner_table(tb,tb_name):
     c.execute("select sql from sqlite_master where sql not NULL")
     fetch = c.fetchall()
-    schema = """CREATE TABLE """ + tb_name + """("""
+    schema = """CREATE TABLE """ + tb_name + """ (\n"""
     cn = 0
     id = None
     prims = []
@@ -95,11 +96,11 @@ def generate_spanner_table(tb,tb_name):
     for ob in tb:
         oblist = list(ob)
         if cn == len(tb) - 1:
-            schema += oblist[1] + "     " + get_statement_datatype(oblist[2])
+            schema += "   " + oblist[1] + "     " + get_statement_datatype(oblist[2]) + "\n"
         else:
-            schema += oblist[1] + "     " + get_statement_datatype(oblist[2]) + ","
+            schema += "   " + oblist[1] + "     " + get_statement_datatype(oblist[2]) + "," + "\n"
         cn += 1
-        schema += """)"""
+    schema += """) """
     if len(prims) > 0:
         schema += """PRIMARY KEY """ + str(tuple(prims))
     return schema
