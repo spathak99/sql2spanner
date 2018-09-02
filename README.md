@@ -24,3 +24,6 @@ There is plenty of room for improvements and changes,so feel free to fork
 and whatever features
 
 Testing has been done on the Cloud, but more would be appreciated
+
+## License
+MIT License
