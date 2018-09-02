@@ -64,7 +64,6 @@ def get_values(name):
 def generate_spanner_table(tb,tb_name):
     c.execute("select sql from sqlite_master where sql not NULL")
     fetch = c.fetchall()
-    schema = """CREATE TABLE """ + tb_name + """ (\n"""
     cn = 0
     id = None
     prims = []
@@ -81,18 +80,19 @@ def generate_spanner_table(tb,tb_name):
                     schem = row[0]
                     break
     prim = "\[(.*?)\]\s+INTEGER\s+PRIMARY\s+KEY"
-    matches = re.search(prim, row[0])
+    matches = re.search(prim, schem)
     if matches:
         int_key = matches.groups([1])[0]
         prims.append(int_key)
         pattern = "FOREIGN\s+KEY\s*\(*(.*?)*\)"
-        ms = re.finditer(pattern, row[0])
+        ms = re.finditer(pattern, schem)
         if ms:
             for ma in ms:
                 match2 = re.search("\[(.*?)\]", ma.group())
                 prims.append(match2.groups()[0])
-   # print(prims,"\n")
-
+    #print(prims,"\n")
+    #print(schem)
+    schema = """CREATE TABLE """ + tb_name + """ (\n"""
     for ob in tb:
         oblist = list(ob)
         if cn == len(tb) - 1:
@@ -103,6 +103,13 @@ def generate_spanner_table(tb,tb_name):
     schema += """) """
     if len(prims) > 0:
         schema += """PRIMARY KEY """ + str(tuple(prims))
+    ref = re.search(r'REFERENCES+\s+"[^"]*"',schem)
+    if ref:
+        x = ref.group(0)
+        interleave = re.search(r'"[^"]*"',x)
+        if interleave:
+            intb = interleave.group(0)[1:-1]
+            schema += ",\n  INTERLEAVE IN PARENT " + intb + " ON DELETE CASCADE"
     return schema
 
 
