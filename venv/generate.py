@@ -146,9 +146,9 @@ for name in names:
 
 
 
-"""database = instance.database(database_id, ddl_statements=dd)
+database = instance.database(database_id, ddl_statements=dd)
 operation = database.create()
-insert_spanner_data(instance_id,database_id,names)"""
+insert_spanner_data(instance_id,database_id,names)
 
 
 
