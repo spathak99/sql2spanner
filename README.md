@@ -5,7 +5,8 @@
 
 * Converts and stores data in the new schema's format
 
-* Backs up the data in the form of JSON Objects to Google Cloud Datastore
+## TODO
+* Back up the data in the form of JSON Objects to Google Cloud Datastore
 
 ## Getting Started
 * [Make sure to get started by following the tutorial, and create both an instance and a database](https://cloud.google.com/spanner/docs/tutorials)
