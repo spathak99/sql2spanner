@@ -21,7 +21,7 @@ Place any .db file in the directory
 
 ## Contributing
 There is plenty of room for improvements and changes,so feel free to fork
-and whatever features
+and add any necessary features
 
 Testing has been done on the Cloud, but more would be appreciated
 
